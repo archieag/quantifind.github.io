@@ -1,0 +1,162 @@
+<!doctype html>
+<!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]>         <html class="no-js lt-ie9"> <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js"> <!--<![endif]-->
+<head>
+
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+
+  <title>Quantifind User Login</title>
+
+  <meta name="description" content="">
+  <meta name="viewport" content="width=device-width">
+
+  <link rel="stylesheet" href="/css/normalize.css"></link>
+  <link rel="stylesheet" href="/css/proxima.css"></link>
+  <link rel="stylesheet" href="/css/login.css">
+</head>
+
+<body>
+
+<!-- This page doubles as create account and login page. -->
+
+<div class="login-container-shadow-box">
+  <div class="shadow1"></div>
+  <div class="shadow2"></div>
+</div>
+
+<div id="content" class="login-container ft-light ft-white">
+  <div class="ft-thin ft-32 ft-positive welcome-msg">
+    Hello.
+  </div>
+  <div class="logo"></div>
+
+  <!-- User login -->
+  <form id="user-login" class="user-editor">
+    <div class="ft-semibold ft-upper ft-space-1 ft-white ft-13">Login</div>
+    <div><input id="username" type="text" name="email" class="ft-white ft-14" placeholder="email address"/></div>
+    <div><input id="password" type="password" name="password" placeholder="type password" class="ft-grey ft-14" required/></div>
+    <div>
+      <div class="checkbox">
+        <input type="checkbox" name="remember-me" value="remember-me" id="remember-me">
+        <label for="remember-me" class="ft-grey ft-12">Remember me on this computer</label>
+      </div>
+      <input type="submit" value="Login" class="ft-blue ft-semibold ft-15 login-btn ft-upper">
+    </div>
+  </form>
+
+  <div class="footer ft-grey ft-12 ft-semibold">
+    Have trouble logging in? Contact us at <a href='mailto:help@quantifind.com' class="ft-blue">help@quantifind.com</a>
+  </div>
+</div>
+
+ <form id="adminME" method="POST" action="http://me.quantifind.com/login">
+  <input type="text" id="email" name="email">
+  <input type="password" id="password" name="password">
+  <input type="submit" class="submitForm">
+</form>
+
+<form id="mainProd" method="POST" action="https://q.quantifind.com/j_spring_security_check">
+  <input type="text" id="email" name="j_username">
+  <input type="password" id="password" name="j_password">
+  <input type="submit" class="submitForm">
+</form>
+
+<script src="http://code.jquery.com/jquery-1.6.4.min.js"></script>
+<script type="text/javascript">
+
+  $(document).ready(function(){
+
+    var mediaEfficacyUrl = "http://me.quantifind.com";
+    var mainProductUrl = "https://q.quantifind.com"
+
+    $('.login-btn').click(function(evt){
+
+      evt.preventDefault();
+      var username = $('#user-login #username').attr('value');
+
+      if (username === "admin@quantifind.com")
+        submitFormToMainProduct();
+      else if (username.indexOf("@quantifind.com") >= 0)
+        submitFormToME();
+      else {
+        checkUserAuthOnBoth();
+      }
+    });
+
+    var submitFormToME = function() {
+      $("#adminME #email").attr("value", $('#username').attr('value'));
+      $('#adminME #password').attr("value", $('#password').attr('value'));
+      $('#adminME .submitForm').click();
+    };
+
+    var submitFormToMainProduct = function() {
+      $("#mainProd #email").attr("value", $('#username').attr('value'));
+      $('#mainProd #password').attr("value", $('#password').attr('value'));
+      $('#mainProd .submitForm').click();
+    };
+
+    var displayUnauthorizedError = function() {
+      $('#user-login #username').attr('status', 'invalid');
+      $('#user-login #password').attr('status', 'invalid');
+      $('#user-login #username').attr('value', '');
+      $('#user-login #password').attr('value', '');
+      $('#user-login #username').attr('placeholder', 'enter correct email');
+      $('#user-login #password').attr('placeholder', 'enter correct password');
+    };
+
+    var checkUserOnMediaEff = function() {
+      $.ajax({
+        type: "POST",
+        url: mediaEfficacyUrl + "/login_check",
+        data: {
+          email: $('#user-login #username').attr('value'),
+          password: $('#user-login #password').attr('value')
+        },
+        xhrFields: {
+          withCredentials: true
+        },
+        success: function(res){
+          if (res.status === 302)
+            submitFormToME();
+          else
+            displayUnauthorizedError();
+        },
+        error: function(request, status, error) {
+          console.log(request, status, error);
+        }
+      });
+    };
+
+    var checkUserAuthOnBoth = function() {
+      //Todo: turn this on after CORS is enabled on q.quantifind.com
+     /* $.ajax({
+        type: "POST",
+        url: mainProductUrl + "/login_check",
+        data: {
+          j_username: $('#user-login #username').attr('value'),
+          j_password: $('#user-login #password').attr('value')
+        },
+        xhrFields: {
+          withCredentials: true
+        },
+        success: function(res){
+          if (res.statusCode === 302)
+            submitFormToMainProduct();
+          else
+            checkUserOnMediaEff();
+        },
+        error: function(request, status, error) {
+          console.log(request, status, error);
+        }
+      }); */
+      checkUserOnMediaEff();
+    };
+
+  });
+</script>
+
+</body>
+</html>
