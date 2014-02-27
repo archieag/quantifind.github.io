@@ -78,7 +78,8 @@
       var username = $('#user-login #username').attr('value');
 
       if (username === "admin@quantifind.com")
-        submitFormToMainProduct();
+        //submitFormToMainProduct();
+        checkUserAuthOnBoth();
       else if (username.indexOf("@quantifind.com") >= 0)
         submitFormToME();
       else {
@@ -126,13 +127,13 @@
         },
         error: function(request, status, error) {
           console.log(request, status, error);
+          displayUnauthorizedError();
         }
       });
     };
 
     var checkUserAuthOnBoth = function() {
-      //Todo: turn this on after CORS is enabled on q.quantifind.com
-     /* $.ajax({
+      $.ajax({
         type: "POST",
         url: mainProductUrl + "/login_check",
         data: {
@@ -143,6 +144,8 @@
           withCredentials: true
         },
         success: function(res){
+          console.log (res.statusCode);
+          console.log(res);
           if (res.statusCode === 302)
             submitFormToMainProduct();
           else
@@ -150,8 +153,9 @@
         },
         error: function(request, status, error) {
           console.log(request, status, error);
+          displayUnauthorizedError();
         }
-      }); */
+      });
       checkUserOnMediaEff();
     };
 
