@@ -70,7 +70,7 @@
   $(document).ready(function(){
 
     var mediaEfficacyUrl = "http://me.quantifind.com";
-    var mainProductUrl = "https://q.quantifind.com"
+    var mainProductUrl = "http://q.quantifind.com"
 
     $('.login-btn').click(function(evt){
 
@@ -78,8 +78,7 @@
       var username = $('#user-login #username').attr('value');
 
       if (username === "admin@quantifind.com")
-        //submitFormToMainProduct();
-        checkUserAuthOnBoth();
+        submitFormToMainProduct();
       else if (username.indexOf("@quantifind.com") >= 0)
         submitFormToME();
       else {
@@ -120,13 +119,14 @@
           withCredentials: true
         },
         success: function(res){
-          if (res.status === 302)
+          if (res.status === 302) {
             submitFormToME();
+          }
           else
             displayUnauthorizedError();
         },
         error: function(request, status, error) {
-          console.log(request, status, error);
+          console.log("Media Eff Login errored out", request, status, error);
           displayUnauthorizedError();
         }
       });
@@ -140,23 +140,19 @@
           j_username: $('#user-login #username').attr('value'),
           j_password: $('#user-login #password').attr('value')
         },
-        xhrFields: {
-          withCredentials: true
-        },
+
         success: function(res){
-          console.log (res.statusCode);
-          console.log(res);
-          if (res.statusCode === 302)
+          if (res === 'SUCCESS')
             submitFormToMainProduct();
           else
             checkUserOnMediaEff();
         },
         error: function(request, status, error) {
+          console.log("Logging in to Main product errored out");
           console.log(request, status, error);
-          displayUnauthorizedError();
+          checkUserOnMediaEff();
         }
       });
-      checkUserOnMediaEff();
     };
 
   });
