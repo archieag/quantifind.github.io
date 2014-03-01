@@ -71,6 +71,10 @@
 
     var mediaEfficacyUrl = "http://me.quantifind.com";
     var mainProductUrl = "http://q.quantifind.com"
+    var effLoginStatus = false;
+    var prodLoginStatus = false;
+    var prodErroredLogin = false;
+    var effErroredLogin = false;
 
     $('.login-btn').click(function(evt){
 
@@ -107,8 +111,9 @@
       $('#user-login #password').attr('placeholder', 'enter correct password');
     };
 
-    var checkUserOnMediaEff = function() {
-      $.ajax({
+    var checkUserAuthOnBoth = function() {
+
+      var checkOnEfficacy = $.ajax({
         type: "POST",
         url: mediaEfficacyUrl + "/login_check",
         data: {
@@ -121,19 +126,22 @@
         success: function(res){
           if (res.status === 302) {
             submitFormToME();
+            if(checkOnMain) checkOnMain.abort();
           }
           else
-            displayUnauthorizedError();
+            effErroredLogin = true;
         },
         error: function(request, status, error) {
           console.log("Media Eff Login errored out", request, status, error);
-          displayUnauthorizedError();
+          effErroredLogin = true;
+        },
+        complete: function() {
+          effLoginStatus = true;
+          showError();
         }
       });
-    };
 
-    var checkUserAuthOnBoth = function() {
-      $.ajax({
+      var checkOnMain =  $.ajax({
         type: "POST",
         url: mainProductUrl + "/login_check",
         data: {
@@ -142,17 +150,30 @@
         },
 
         success: function(res){
-          if (res === 'SUCCESS')
+          if (res === 'SUCCESS'){
             submitFormToMainProduct();
+            if(checkOnEfficacy) checkOnEfficacy.abort();
+          }
           else
-            checkUserOnMediaEff();
+            prodErroredLogin = true;
         },
         error: function(request, status, error) {
           console.log("Logging in to Main product errored out");
           console.log(request, status, error);
-          checkUserOnMediaEff();
+          prodErroredLogin = true;
+        },
+        complete: function() {
+          prodLoginStatus = true;
+          showError();
         }
       });
+
+    };
+
+    var showError = function() {
+      if (effLoginStatus && prodLoginStatus)  {
+        if (effErroredLogin && prodErroredLogin) displayUnauthorizedError();
+      }
     };
 
   });
