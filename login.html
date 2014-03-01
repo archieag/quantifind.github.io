@@ -52,13 +52,13 @@
   </div>
 </div>
 
- <form id="adminME" method="POST" action="http://me.quantifind.com/login">
+ <form id="adminME" method="POST" action="https://me.quantifind.com/login">
   <input type="text" id="email" name="email">
   <input type="password" id="password" name="password">
   <input type="submit" class="submitForm">
 </form>
 
-<form id="mainProd" method="POST" action="http://q.quantifind.com/j_spring_security_check">
+<form id="mainProd" method="POST" action="https://q.quantifind.com/j_spring_security_check">
   <input type="text" id="email" name="j_username">
   <input type="password" id="password" name="j_password">
   <input type="submit" class="submitForm">
@@ -69,12 +69,12 @@
 
   $(document).ready(function(){
 
-    var mediaEfficacyUrl = "http://me.quantifind.com";
-    var mainProductUrl = "http://q.quantifind.com"
     var effLoginStatus = false;
     var prodLoginStatus = false;
     var prodErroredLogin = false;
     var effErroredLogin = false;
+    var mediaEfficacyUrl = "https://me.quantifind.com";
+    var mainProductUrl = "https://q.quantifind.com"
 
     $('.login-btn').click(function(evt){
 
