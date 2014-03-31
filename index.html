@@ -134,7 +134,11 @@
 					<header>
 						<a name="{{post.id}}"></a>
 						<h3 class="post-title"><span>{{post.team}}</span> {{ post.title}}</h3>
-						<p class="post-location">Menlo Park, CA Headquarters</p>
+						{% if post.location} %}
+							<p class="post-location">{{post.location}}</p>
+						{% else %}
+							<p class="post-location">Menlo Park, CA Headquarters</p>
+						{% endif %}
 					</header>
 					{{ post.content }}
 					<footer>
