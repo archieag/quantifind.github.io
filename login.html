@@ -14,14 +14,20 @@
   <meta name="viewport" content="width=device-width">
 
   <script type="text/javascript">
-    if(/^http:\/\/(www\.)?quantifind.com/.test(window.location.toString())){
-      window.location="https://quantifind.com/login";
-    }
+    // if(/^http:\/\/(www\.)?quantifind.com/.test(window.location.toString())){
+    //   window.location="https://quantifind.com/login";
+    // }
   </script>
 
   <link rel="stylesheet" href="/css/normalize.css"></link>
   <link rel="stylesheet" href="/css/proxima.css"></link>
   <link rel="stylesheet" href="/css/login.css">
+
+  <style>
+    .product-login-form {
+      display:none;
+    }
+  </style>
 </head>
 
 <body>
@@ -47,7 +53,7 @@
     <div>
       <div class="checkbox">
         <input type="checkbox" name="remember-me" value="remember-me" id="remember-me">
-        <label for="remember-me" class="ft-grey ft-12">Remember me on this computer</label>
+        <label style="display:none" for="remember-me" class="ft-grey ft-12">Remember me on this computer</label>
       </div>
       <input type="submit" value="Login" class="ft-blue ft-semibold ft-15 login-btn ft-upper">
     </div>
@@ -58,15 +64,21 @@
   </div>
 </div>
 
- <form id="adminME" method="POST" action="http://me.quantifind.com/login">
-  <input type="text" id="email" name="email">
-  <input type="password" id="password" name="password">
+ <form id="adminME" class='product-login-form' method="POST" action="https://me.quantifind.com/login">
+  <input type="text" class="email" name="email">
+  <input type="password" class="password" name="password">
   <input type="submit" class="submitForm">
 </form>
 
-<form id="mainProd" method="POST" action="http://q.quantifind.com/j_spring_security_check">
-  <input type="text" id="email" name="j_username">
-  <input type="password" id="password" name="j_password">
+ <form id="loginSignum" class='product-login-form' method="POST" action="https://signum.quantifind.com/login">
+  <input type="text" class="email" name="email">
+  <input type="password" class="password" name="password">
+  <input type="submit" class="submitForm">
+</form>
+
+<form id="mainProd" class='product-login-form' method="POST" action="https://q.quantifind.com/j_spring_security_check">
+  <input type="text" class="email" name="j_username">
+  <input type="password" class="password" name="j_password">
   <input type="submit" class="submitForm">
 </form>
 
@@ -75,38 +87,21 @@
 
   $(document).ready(function(){
 
-    var mediaEfficacyUrl = "http://me.quantifind.com";
-    var mainProductUrl = "http://q.quantifind.com"
+    var mediaEfficacyUrl = "https://me.quantifind.com";
+    var signumUrl = "https://signum.quantifind.com";
+    var movieProductUrl = "https://q.quantifind.com"
     var effLoginStatus = false;
     var prodLoginStatus = false;
     var prodErroredLogin = false;
     var effErroredLogin = false;
 
     $('.login-btn').click(function(evt){
-
       evt.preventDefault();
       var username = $('#user-login #username').attr('value');
-
-      if (username === "admin@quantifind.com")
-        submitFormToMainProduct();
-      else if (username.indexOf("@quantifind.com") >= 0)
-        submitFormToME();
-      else {
-        checkUserAuthOnBoth();
-      }
+      var password = $('#user-login #password').attr('value');
+      checkUserAuthOnAll(username, password);
     });
 
-    var submitFormToME = function() {
-      $("#adminME #email").attr("value", $('#username').attr('value'));
-      $('#adminME #password').attr("value", $('#password').attr('value'));
-      $('#adminME .submitForm').click();
-    };
-
-    var submitFormToMainProduct = function() {
-      $("#mainProd #email").attr("value", $('#username').attr('value'));
-      $('#mainProd #password').attr("value", $('#password').attr('value'));
-      $('#mainProd .submitForm').click();
-    };
 
     var displayUnauthorizedError = function() {
       $('#user-login #username').attr('status', 'invalid');
@@ -117,69 +112,71 @@
       $('#user-login #password').attr('placeholder', 'enter correct password');
     };
 
-    var checkUserAuthOnBoth = function() {
 
-      var checkOnEfficacy = $.ajax({
+
+
+    var checkUserAndSubmit = function(url, formSelector, username, password, callback){
+      callback = callback||function(){};
+      var $form = $(formSelector);
+      var $email = $form.find(".email");
+      var $password = $form.find('.password');
+
+      $email.attr("value", username);
+      $password.attr("value", password);
+
+      var nameEmail = $email.attr('name');
+      var namePassword = $password.attr('name');
+
+      var data = {}
+      data[nameEmail]=username;
+      data[namePassword]=password;
+
+      return $.ajax({
         type: "POST",
-        url: mediaEfficacyUrl + "/login_check",
-        data: {
-          email: $('#user-login #username').attr('value'),
-          password: $('#user-login #password').attr('value')
-        },
+        url: url + "/login_check",
+        data: data,
         xhrFields: {
           withCredentials: true
         },
-        success: function(res){
-          if (res.status === 302) {
-            submitFormToME();
-            if(checkOnMain) checkOnMain.abort();
+        success: function(a,b,res){
+          if (res.status === 200) {
+            callback(undefined, $form)
           }
-          else
-            effErroredLogin = true;
+          else{
+            callback(new Error('login error'), $form)
+          }
         },
         error: function(request, status, error) {
-          console.log("Media Eff Login errored out", request, status, error);
-          effErroredLogin = true;
-        },
-        complete: function() {
-          effLoginStatus = true;
-          showError();
+          console.log("Login errored out", url, request, status, error);
+          callback(error);
         }
       });
 
-      var checkOnMain =  $.ajax({
-        type: "POST",
-        url: mainProductUrl + "/login_check",
-        data: {
-          j_username: $('#user-login #username').attr('value'),
-          j_password: $('#user-login #password').attr('value')
-        },
+    }
 
-        success: function(res){
-          if (res === 'SUCCESS'){
-            submitFormToMainProduct();
-            if(checkOnEfficacy) checkOnEfficacy.abort();
-          }
-          else
-            prodErroredLogin = true;
-        },
-        error: function(request, status, error) {
-          console.log("Logging in to Main product errored out");
-          console.log(request, status, error);
-          prodErroredLogin = true;
-        },
-        complete: function() {
-          prodLoginStatus = true;
-          showError();
+
+    var checkUserAuthOnAll = function(username, password) {
+
+      var all = []
+      var errors = 0;
+
+      var onAdminCheck = function(err, $form){
+        if(typeof err!=='undefined' && ++errors>=all.length){
+          displayUnauthorizedError();
+        }else if($form){
+          var $submit = $form.find('.submitForm');
+          $submit.click();
         }
-      });
-
-    };
-
-    var showError = function() {
-      if (effLoginStatus && prodLoginStatus)  {
-        if (effErroredLogin && prodErroredLogin) displayUnauthorizedError();
       }
+
+      if(username!=='admin@quantifind.com'){
+        all.push(checkUserAndSubmit(signumUrl, '#loginSignum', username,password, onAdminCheck));
+        //all.push(checkUserAndSubmit(mediaEfficacyUrl, '#adminME', username,password, onAdminCheck));
+      }
+      all.push(
+        checkUserAndSubmit(movieProductUrl, '#mainProd', username,password, onAdminCheck)
+      );
+
     };
 
   });
